@@ -1,5 +1,5 @@
 #include<gmp.h>
-#include<bits/srdc++.h>
+#include<bits/stdc++.h>
 #include <cryptopp/sha.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/channels.h> 
@@ -14,14 +14,15 @@ void RandomInit(gmp_randstate_t st);
 string hash(string message)
 {
 	string l_m;
+	SHA512 sha512;
 	HashFilter f1(sha512, new HexEncoder(new StringSink(l_m)));
 	ChannelSwitch cs;
 	cs.AddDefaultRoute(f1);
 	StringSource ss(message, true /*pumpAll*/, new Redirector(cs));
-	return l_m
+	return l_m;
 }
 
-mpz_t r_i,IDm,R_m,f_m,r_m,X_m,V_m,PIDm;
+mpz_t r_i,IDm,R_m,f_m,r_m,X_m,V_m,PIDm,l_m;
 string strr_i, strIDm, strl_m, strPIDm, strV_m,strX_m;
 string Tm1 = "00005",Ts1;
 
@@ -41,7 +42,7 @@ string sendRequest()
 	strr_i = largeIntToStr(r_i,base);
 	strIDm = largeIntToStr(IDm,base);
 
-	message = strIDm+r_i;
+	message = strIDm+strr_i;
 	strl_m = hash(message);
 
 	string M1;
@@ -55,7 +56,7 @@ void verifyResponse(string M2)
 	int base = 16;
 	mpz_t check,temp;
 	string strf_m,strR_m,message;
-	mpz_inits(check,R_m,f_m,temp,NULL);
+	mpz_inits(check,R_m,f_m,temp,l_m,NULL);
 	
 	//Get R_m and l_m from the message.
 	stringstream tokenizer(M2);
@@ -63,18 +64,18 @@ void verifyResponse(string M2)
 	getline(tokenizer,strf_m,'#');
 
 	//conversion to large integers.
-	mpz_set_str(f_m,strf_m,base);
-	mpz_set_str(R_m,strR_m,base);
+	mpz_set_str(f_m,strf_m.c_str(),base);
+	mpz_set_str(R_m,strR_m.c_str(),base);
 
 
-	mpz_set_str(check,getCipher(f_m),base);
-	strl_m = largeIntToStr(l_m);
+	mpz_set_str(check,getCipher(f_m).c_str(),base);
+	strl_m = largeIntToStr(l_m,base);
 	message = strIDm+strR_m+strl_m;
 	message = hash(message);
 
-	mpz_set_str(temp,message,base);
+	mpz_set_str(temp,message.c_str(),base);
 	string tempstr = getCipher(temp);
-	mpz_set_str(temp,tempstr,base);
+	mpz_set_str(temp,tempstr.c_str(),base);
 	mpz_add(temp,temp,R_m);
 
 	if(mpz_cmp(temp,check)!=0)
@@ -98,19 +99,19 @@ string initAuthentication()
 	//Select r_m.
 	mpz_urandomm(r_m,st,q);
 
-	mpz_set_str(X_m,getCipher(r_m),base);
-	mpz_set_str(V_m,getCipher(r_m),base);   //Change this for multiplation with P_pub and not base point.
+	mpz_set_str(X_m,getCipher(r_m).c_str(),base);
+	mpz_set_str(V_m,getCipher(r_m).c_str(),base);   //Change this for multiplation with P_pub and not base point.
 
 	string tempstr;
-	tempstr = largeIntToStr(X_m) ;
+	tempstr = largeIntToStr(X_m,base) ;
 	tempstr+=Tm1;
 	tempstr = hash(tempstr);
 
-	strPIDm = strIDm ^ tempstr;
+	strPIDm = calcXor(strIDm , tempstr);
 
 	string M1;
-	strV_m = largeIntToStr(V_m);
-	strX_m = largeIntToStr(X_m);
+	strV_m = largeIntToStr(V_m,base);
+	strX_m = largeIntToStr(X_m,base);
 	M1 = strPIDm +"#" + strV_m+ "#"+strX_m+"#";
 	return M1;
 
@@ -144,7 +145,7 @@ string verifyAuthentication(string M2)
 	cout<<"\nAuthentication successful!!!!\n";
 
 	string K,temp;
-	temp = getCipher(r_m,R_s);
+	temp = getCipher(r_m);  //Multiply with R_s.
 	temp+=strl_m;
 
 	K = hash(K);
@@ -153,11 +154,7 @@ string verifyAuthentication(string M2)
 }
 
 
-void RandomInit(gmp_randstate_t st)
+int main()
 {
-	unsigned long seed;
-	seed= time(NULL);
-	gmp_randinit_mt(st);
-	gmp_randseed_ui(st,seed);
-	return;
+	return 0;
 }

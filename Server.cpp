@@ -10,15 +10,10 @@ using std::cout;
 using std::endl;
 using std::string;
 void RandomInit(gmp_randstate_t st);
-//Various Curve parameters in string format.
-string strCurve = "FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFFC2F";
-string strXp = "79BE667E F9DCBBAC 55A06295 CE870B07 029BFCDB 2DCE28D9 59F2815B 16F81798";
-string strYp = "483ADA77 26A3C465 5DA4FBFC 0E1108A8 FD17B448 A6855419 9C47D08F FB10D4B8";
-string strQ = "FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141";
-string strP = "FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFFC2F";
+
 
 //Variable to store curve parameters in large integer format.
-mpz_t Xp,Yp,q,a,b,P,s,sInv,P_pub,IDm,X_m,r_s;
+mpz_t s,sInv,P_pub,IDm,X_m,r_s;
 mpz_t w_s,f_m; 
 string K;
 string strIDm,l_m, h_m;
