@@ -180,7 +180,7 @@ string getCipher(mpz_t k)
 		cout<<"Valid base point"<<endl;
 	else
 		cout<<"Recheck base point"<<endl;
-	return "23";	
+	return convertPointToString(xr,yr);	
 }
 
 
