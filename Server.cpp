@@ -5,7 +5,10 @@
 #include <cryptopp/channels.h> 
 #include <cryptopp/filters.h> 
 #include "Ecc.cpp"
-using namespace std;
+using namespace CryptoPP;
+using std::cout;
+using std::endl;
+using std::string;
 void RandomInit(gmp_randstate_t st);
 //Various Curve parameters in string format.
 string strCurve = "FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFFC2F";
@@ -19,6 +22,18 @@ mpz_t Xp,Yp,q,a,b,P,s,sInv,P_pub,IDm,X_m,r_s;
 mpz_t w_s,f_m; 
 string K;
 string strIDm,l_m, h_m;;
+
+//Function to has input message using SHA512 hashing technique.
+string hash(string message)
+{
+	string l_m;
+	SHA sha512;
+	HashFilter f1(sha512, new HexEncoder(new StringSink(l_m)));
+	ChannelSwitch cs;
+	cs.AddDefaultRoute(f1);
+	StringSource ss(message, true /*pumpAll*/, new Redirector(cs));
+	return l_m;
+}
 
 
 //Generates various parameters and return the public key of server.
@@ -63,7 +78,8 @@ string genParameters()
 
 string userRegistration(string M)
 {
-	gmp_randstate_t st; //For random number generation.    
+	gmp_randstate_t st; //For random number generation.   
+	int base = 16; 
 	mpz_inits(w_s,f_m,NULL);    
 
 	//To tokenize the message M into IDm and lm.
@@ -72,7 +88,6 @@ string userRegistration(string M)
 
 	//For implementing the hash function.
 	string message ;
-	SHA512 sha512;
 	
 
 
@@ -83,24 +98,21 @@ string userRegistration(string M)
 	cout<<"\nIDm = "<<strIDm<<endl;
 	cout<<"\nl_m = "<<l_m<<endl;
 
-	mpz_set_str(IDm,strIDm,16);
+	mpz_set_str(IDm,strIDm,base);
 	RandomInit(st);
  	mpz_urandomm(w_s,st,q);
 
  	string R_m = getCipher(w_s);
  	
  	message = strIDm+R_m+l_m;
- 	HashFilter f1(sha512, new HexEncoder(new StringSink(h_m)));
-	ChannelSwitch cs;
-	cs.AddDefaultRoute(f1);
-	StringSource ss(message, true /*pumpAll*/, new Redirector(cs));
+ 	h_m = hash(message);
 	cout<<"\nh_m = "<<h_m<<endl;
 
 	mpz_mul(f_m,hm,s);
 	mpz_mod(f_m,f_m,P);
 	mpz_add(f_m,w_s,f_m);
 	char *str2;
-	char *str = mpz_get_str(str2,16,f_m);
+	char *str = mpz_get_str(str2,base,f_m);
 	
 	string M1(str);
 	string M2(R_m);
@@ -118,7 +130,6 @@ string userAuthentication(string M)
 	string xm_tm,check_hm;
 	string X_m1,IDm1,message;
 	gmp_randstate_t st;
-	SHA512 sha512;
 
 	RandomInit(st);
 
@@ -136,18 +147,14 @@ string userAuthentication(string M)
 	X_m1 = getCipher(sInv);
 
 	message = x_m1+Tm1;
- 	HashFilter f1(sha512, new HexEncoder(new StringSink(xm_tm)));
-	ChannelSwitch cs;
-	cs.AddDefaultRoute(f1);
-	StringSource ss(message, true /*pumpAll*/, new Redirector(cs));
-	cout<<"\nh_m = "<<xm_tm<<endl;
+ 	xm_tm = hash(message);
+	cout<<"\nxm_tm = "<<xm_tm<<endl;
 
-	IDm1 = strPIDm ^ xm_tm;
+/////////////////////////////////////////////////////////////////
+	IDm1 = strPIDm ^ xm_tm;			//verify if this works.
+/////////////////////////////////////////////////////////////////	
 	message  = IDm1 + R_m + l_m;
-	HashFilter f2(sha512, new HexEncoder(new StringSink(check_hm)));
-	ChannelSwitch cs2;
-	cs.AddDefaultRoute(f2);
-	StringSource ss2(message, true /*pumpAll*/, new Redirector(cs2));
+	check_hm = hash(message);
 
 	if(check_hm != hm)
 	{
@@ -162,20 +169,14 @@ string userAuthentication(string M)
 
 	string rs_Xm=getCipher(r_s,X_m1);
 	message = rs_Xm+l_m;
-	HashFilter f3(sha512, new HexEncoder(new StringSink(K)));
-	ChannelSwitch cs3;
-	cs.AddDefaultRoute(f3);
-	StringSource ss3(message, true /*pumpAll*/, new Redirector(cs3));
+	K = hash(message);
 
 
 	cout<<"\nThe Key K  = "<<K<<endl;
 	string Aut1;
 	string Ts1 = "0";
-	message = IDm1+Tm1+Ts1+x_m1+R_s+l_m;
-	HashFilter f4(sha512, new HexEncoder(new StringSink(K)));
-	ChannelSwitch cs4;
-	cs.AddDefaultRoute(f4);
-	StringSource ss4(message, true /*pumpAll*/, new Redirector(cs4));
+	message = IDm1+"#"+Tm1+"#"+Ts1+"#"+x_m1+"#"+R_s+"#"+l_m+"#";
+	Aut1 = hash(message);
 	cout<<"Aut1 = "<<Aut1<<endl;
 	return Aut1;
 
