@@ -1,5 +1,5 @@
 #include<gmp.h>
-#include<bits/srdc++.h>
+#include<bits/stdc++.h>
 #include <cryptopp/sha.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/channels.h> 
@@ -21,7 +21,8 @@ string strP = "FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FF
 mpz_t Xp,Yp,q,a,b,P,s,sInv,P_pub,IDm,X_m,r_s;
 mpz_t w_s,f_m; 
 string K;
-string strIDm,l_m, h_m;;
+string strIDm,l_m, h_m;
+string R_m,R_s;
 
 //Function to has input message using SHA512 hashing technique.
 string hash(string message)
@@ -57,7 +58,7 @@ string genParameters()
 
 	ret = mpz_set_str(Yp,strYp.c_str(),16);
 	if(ret == 0)
-		gmp_printf("Xy=%Zd\n",Yp);
+		gmp_printf("Yp=%Zd\n",Yp);
 
 	ret = mpz_set_str(q,strQ.c_str(),16);
 	if(ret == 0)
@@ -80,7 +81,8 @@ string userRegistration(string M)
 {
 	gmp_randstate_t st; //For random number generation.   
 	int base = 16; 
-	mpz_inits(w_s,f_m,NULL);    
+	mpz_t H_m;
+	mpz_inits(w_s,f_m,H_m,NULL);    
 
 	//To tokenize the message M into IDm and lm.
 	stringstream tokenizer(M);
@@ -98,17 +100,18 @@ string userRegistration(string M)
 	cout<<"\nIDm = "<<strIDm<<endl;
 	cout<<"\nl_m = "<<l_m<<endl;
 
-	mpz_set_str(IDm,strIDm,base);
+	mpz_set_str(IDm,strIDm.c_str(),base);
 	RandomInit(st);
  	mpz_urandomm(w_s,st,q);
 
- 	string R_m = getCipher(w_s);
+ 	R_m= getCipher(w_s);
  	
  	message = strIDm+R_m+l_m;
  	h_m = hash(message);
 	cout<<"\nh_m = "<<h_m<<endl;
 
-	mpz_mul(f_m,hm,s);
+	mpz_set_str(H_m,h_m.c_str(),base);
+	mpz_mul(f_m,H_m,s);
 	mpz_mod(f_m,f_m,P);
 	mpz_add(f_m,w_s,f_m);
 	char *str2;
@@ -146,17 +149,17 @@ string userAuthentication(string M)
 	mpz_invert(sInv,s,P);
 	X_m1 = getCipher(sInv);
 
-	message = x_m1+Tm1;
+	message = X_m1+Tm1;
  	xm_tm = hash(message);
 	cout<<"\nxm_tm = "<<xm_tm<<endl;
 
 /////////////////////////////////////////////////////////////////
-	IDm1 = strPIDm ^ xm_tm;			//verify if this works.
+	IDm1 = calcXor(strPIDm , xm_tm);			//verify if this works.
 /////////////////////////////////////////////////////////////////	
 	message  = IDm1 + R_m + l_m;
 	check_hm = hash(message);
 
-	if(check_hm != hm)
+	if(check_hm != h_m)
 	{
 		cout<<"\nError h_m not equal to H2(IDm||R_m||l_m)\nNot safe connection.\n";
 		exit(0);
@@ -167,7 +170,7 @@ string userAuthentication(string M)
 	mpz_urandomm(r_s,st,q);
 	R_s = getCipher(r_s);
 
-	string rs_Xm=getCipher(r_s,X_m1);
+	string rs_Xm=getCipher(r_s);   //multiply with X_m1.
 	message = rs_Xm+l_m;
 	K = hash(message);
 
@@ -175,7 +178,7 @@ string userAuthentication(string M)
 	cout<<"\nThe Key K  = "<<K<<endl;
 	string Aut1;
 	string Ts1 = "0";
-	message = IDm1+"#"+Tm1+"#"+Ts1+"#"+x_m1+"#"+R_s+"#"+l_m+"#";
+	message = IDm1+"#"+Tm1+"#"+Ts1+"#"+X_m1+"#"+R_s+"#"+l_m+"#";
 	Aut1 = hash(message);
 	cout<<"Aut1 = "<<Aut1<<endl;
 	return Aut1;
@@ -184,11 +187,11 @@ string userAuthentication(string M)
 
 
 
-void RandomInit(gmp_randstate_t st)
+
+
+int main()
 {
-	unsigned long seed;
-	seed= time(NULL);
-	gmp_randinit_mt(st);
-	gmp_randseed_ui(st,seed);
-	return;
+	string p_pub=genParameters();
+	cout<<"Public key is="<<p_pub<<endl;
+	return 0;
 }

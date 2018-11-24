@@ -11,6 +11,25 @@ void RandomInit(gmp_randstate_t st)
 	return;
 }
 
+string largeIntToStr(mpz_t k, int base)
+{
+	char str[1000];
+	mpz_get_str(str,base,k);
+	string s(str);
+	return s;
+}
+
+string calcXor(string s1,string s2)
+{
+	mpz_t a,b;
+	mpz_inits(a,b,NULL);
+	mpz_set_str(a,s1.c_str(),10);
+	mpz_set_str(b,s2.c_str(),10);
+	mpz_xor(a,a,b);
+	string s = largeIntToStr(a,10);
+	return s;
+}
+
 void calculateSlope(mpz_t xp,mpz_t yp,mpz_t xq,mpz_t yq,mpz_t slope,mpz_t P,mpz_t a)
 {
 	mpz_t temp1,temp2,rem,den,num;
@@ -115,21 +134,23 @@ void scalarMultiplys(mpz_t k,mpz_t xp,mpz_t yp,mpz_t xr,mpz_t yr,mpz_t P,mpz_t a
 		return;
 }
 
-string convertPointToString(mpz_t xr,mpz_t yr)
-{
-	cout<<"Conversion1"<<endl;
-	char *temp1,*temp2,*str1,*str2;
-	temp1=mpz_get_str(str1,16,xr);
-	cout<<temp1<<endl;
-	cout<<"Conversion2"<<endl;
-	temp2=mpz_get_str(str2,16,yr);
-	cout<<temp2<<endl;
-	cout<<"Conversion3"<<endl;
-	cout<<temp1<<" "<<temp2<<endl;
-	string s1(temp1),s2(temp2);
-	string s3=s1+s2;
-	return s3;
-}
+// string convertPointToString(mpz_t xr,mpz_t yr)
+// {
+// 	cout<<"Conversion1"<<endl;
+// 	char *temp1,*temp2,*str1,*str2;
+// 	temp1=mpz_get_str(str1,16,xr);
+// 	cout<<temp1<<endl;
+// 	cout<<"Conversion2"<<endl;
+// 	temp2=mpz_get_str(str2,16,yr);
+// 	cout<<temp2<<endl;
+// 	cout<<"Conversion3"<<endl;
+// 	cout<<temp1<<" "<<temp2<<endl;
+// 	string s1(temp1),s2(temp2);
+// 	string s3=s1+s2;
+// 	return s3;
+// }
+
+
 
 bool checkValidPoint(mpz_t a,mpz_t b,mpz_t p,mpz_t x,mpz_t y)//to check whether the point lies on the curve
 {
@@ -177,10 +198,15 @@ string getCipher(mpz_t k)
 	gmp_printf("XR=%Zd\n",xr);
 	gmp_printf("YR=%Zd\n",yr);	
 	if(checkValidPoint(a,b,P,xr,yr))
-		cout<<"Valid base point"<<endl;
+		cout<<"Valid point"<<endl;
 	else
 		cout<<"Recheck base point"<<endl;
-	return convertPointToString(xr,yr);	
+	string s1=largeIntToStr(xr,10);
+	cout<<s1<<endl;
+	string s2=largeIntToStr(yr,10);
+	cout<<s2<<endl;
+	string s3=s1+s2;
+	return s3;
 }
 
 

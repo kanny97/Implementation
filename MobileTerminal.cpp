@@ -21,14 +21,6 @@ string hash(string message)
 	return l_m
 }
 
-string largeIntToStr(mpz_t k, int base)
-{
-	char *str,*str1;
-	str = mpz_get_str(str1,base,k);
-	string s(str);
-	return s;
-}
-
 mpz_t r_i,IDm,R_m,f_m,r_m,X_m,V_m,PIDm;
 string strr_i, strIDm, strl_m, strPIDm, strV_m,strX_m;
 string Tm1 = "00005",Ts1;
